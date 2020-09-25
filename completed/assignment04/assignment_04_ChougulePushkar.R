@@ -36,9 +36,10 @@ covid_df <- read.csv("data/nytimes/covid-19-data/us-states.csv")
 head(covid_df)
 ## Parse the date column using `as.Date()``
 
-covid_df$date <- as.Date(as.character(covid_df$date), format = "%m/%d/%y")
+# On my local machine, the dates are being interpreted in mm/dd/yyyy format. To get around
+# this, using as.character function and format parameter. Thanks to fellow students help.
 
-#covid_df$date <- as.Date(date, "%Y-%m-%d")
+covid_df$date <- as.Date(as.character(covid_df$date), format = "%m/%d/%y")
 
 
 ## Create three dataframes named `california_df`, `ny_df`, and `florida_df`
