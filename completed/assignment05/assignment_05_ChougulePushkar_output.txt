@@ -1,0 +1,20 @@
+> ## Using `cor()` compute correlation coefficients for
+
+> ## height vs. earn
+
+[1] 0.2418481
+
+
+> ### age vs. earn
+
+[1] 0.08100297
+
+
+> ### ed vs. earn
+
+[1] 0.3399765
+
+
+> ## Spurious correlation - tech_spending vs. suicides 
+
+[1] 0.9920817
