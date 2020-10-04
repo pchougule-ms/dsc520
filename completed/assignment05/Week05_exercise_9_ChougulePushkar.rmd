@@ -4,8 +4,8 @@ author: "Pushkar Chougule"
 date: Oct 4th 2020
 output:
   
-  pdf_document: default
   word_document: default
+  pdf_document: default
 bibliography: bibliography.bib
 ---
 
@@ -93,7 +93,7 @@ pander(cor(student_df, method = "kendall"),
 
     1. All Variables  
     
-  > Used cor.plot() for correlation matrix display
+  > Used pander for correlation matrix display in table format
   > It can also be done using ggpairs() - GGally package [@lander2014r].
 
 ```{r echo=FALSE}
@@ -101,6 +101,10 @@ pander(cor(student_df, method = "kendall"),
 library(pander)
 pander(cor(student_df, method = "pearson"), 
        caption = "Correlation table using Pearson method")
+
+
+#library(Hmisc)
+#rcorr(as.matrix(student_df))
 
 
 library(GGally)
