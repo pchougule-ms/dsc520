@@ -130,6 +130,10 @@ cor.test(student_df$TimeTV, student_df$Happiness, method = "pearson")
 cor.test(student_df$TimeReading, student_df$TimeTV, method = "pearson", conf.level = 0.99)
 cor.test(student_df$TimeTV, student_df$Happiness, method = "pearson", conf.level = 0.99)
 
+#cor.test(student_df$TimeReading, student_df$TimeTV, method = "spearman", conf.level = 0.99)
+
+#cor.test(student_df$TimeReading, student_df$TimeTV, method = "kendall", conf.level = 0.99)
+
 ```
 
     4. Explanation of the two correlation tests above
