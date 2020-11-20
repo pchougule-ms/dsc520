@@ -1,0 +1,137 @@
+---
+title: 'RMarkdown Assignment # 16 - Week 09'
+author: "Pushkar Chougule"
+date: "Oct 31st 2020"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+##Read the Binary csv dataset and use summary() on the dataframe.
+
+
+```{r }
+
+cluster_csv <- read.csv('clustering-data.csv', header = TRUE)
+
+str(cluster_csv)
+
+summary(cluster_csv)
+
+```
+
+**a. Plot scatter plots for dataset **
+
+```{r}
+
+library(ggplot2)
+theme_set(theme_minimal())
+
+ggplot(cluster_csv, aes(x = x, y = y)) + geom_point() + ggtitle("Cluster csv scatterplot")
+
+```
+
+
+##
+
+
+```{r}
+
+k_list = c(2:12)
+
+fun_new <- function(df, n)
+{
+  
+  kmeans_n <- kmeans(df, n)
+  kmeans_n$cluster <- as.factor(kmeans_n$cluster)
+  clusters <- kmeans_n$cluster
+  
+  print(sprintf("Scatter plot of cluster with k=%s", n))
+  
+  ggplot(df, aes(x, y, col=clusters)) + geom_point() + ggtitle("cluster scatter plot")
+  
+}
+
+  
+fun_new(cluster_csv, 2)
+fun_new(cluster_csv, 3)
+fun_new(cluster_csv, 4)
+fun_new(cluster_csv, 5)
+fun_new(cluster_csv, 6)
+fun_new(cluster_csv, 7)
+fun_new(cluster_csv, 8)
+fun_new(cluster_csv, 9)
+fun_new(cluster_csv, 10)
+fun_new(cluster_csv, 11)
+fun_new(cluster_csv, 12)
+
+
+```
+
+
+
+
+**c. As k-means is an unsupervised algorithm, you cannot compute the accuracy as there are no correct values to compare the output to. Instead, you will use the average distance from the center of each cluster as a measure of how well the model fits the data. To calculate this metric, simply compute the distance of each data point to the center of the cluster it is assigned to and take the average value of all of those distances.**
+**Calculate this average distance from the center of each cluster for each value of k and plot it as a line chart where k is the x-axis and the average distance is the y-axis.**
+**One way of determining the “right” number of clusters is to look at the graph of k versus average distance and finding the “elbow point”. Looking at the graph you generated in the previous example, what is the elbow point for this dataset?**
+
+
+```{r}
+
+i <- 1
+tmp_list_vec <- c()
+
+for(t in k_list){
+
+  tmp_list_vec <- c(tmp_list_vec, ((kmeans(cluster_csv, t))$tot.withinss))
+  i <- i + 1
+
+}
+
+tmp_list <- data.frame(k_list, tmp_list_vec)
+colnames <- c("k_val", "tot.wss")
+colnames(tmp_list) <- colnames
+
+
+ggplot(tmp_list, aes(k_val, tot.wss)) + geom_point() + geom_line(aes(col="red")) + ggtitle("k values vs. total within sum of squares")
+
+
+```
+
+```{r }
+
+k.max <- 12
+data <- cluster_csv
+wss <- sapply(2:k.max, 
+              function(k){kmeans(data, k, nstart=50,iter.max = 11)$tot.withinss})
+wss
+plot(2:k.max, wss,
+     type="b", pch = 19, frame = FALSE, 
+     xlab="Number of clusters K",
+     ylab="Total within-clusters sum of squares")
+
+```
+
+
+**Answer c.**
+
+>The elbow method looks at the percentage of variance explained as a function of the number of clusters: One should choose a number of clusters so that adding another cluster doesn’t give much better modeling of the data. More precisely, if one plots the percentage of variance explained by the clusters against the number of clusters, the first clusters will add much information (explain a lot of variance), but at some point the marginal gain will drop, giving an angle in the graph. The number of clusters is chosen at this point, hence the “elbow criterion”. This “elbow” cannot always be unambiguously identified. (r-bloggers.com reference)
+
+>Considering above points and Looking at above two plots, attempted couple of ways, we can see that beyond k=5, the marginal gain starts to drop. Hence k=5 would be an optimal value for given dataset. Even, k=7 could be a potential candidate, but beyond this value of k, no significant value can be achieved.
+
+
+## References
+
+https://www.r-bloggers.com/2017/02/finding-optimal-number-of-clusters/
+
+https://www.analyticsvidhya.com/blog/2015/08/learning-concept-knn-algorithms-programming/#:~:text=Unhesitatingly%2C%20using%20kNN%20Algorithm.,points%20into%20well%20defined%20groups
+
+https://kevinzakka.github.io/2016/07/13/k-nearest-neighbor/

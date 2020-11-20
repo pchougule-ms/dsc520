@@ -1,0 +1,207 @@
+---
+title: 'RMarkdown Assignment # 15 - Week 09'
+author: "Pushkar Chougule"
+date: "Oct 29th 2020"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+##Read the Binary csv dataset and use summary() on the dataframe.
+
+
+```{r }
+
+binary_csv <- read.csv('binary-classifier-data.csv', header = TRUE)
+
+binary_csv$label <- as.factor(binary_csv$label)
+
+str(binary_csv)
+
+summary(binary_csv)
+
+
+trinary_csv <- read.csv('trinary-classifier-data.csv', header = TRUE)
+
+trinary_csv$label <- as.factor(trinary_csv$label)
+
+str(trinary_csv)
+
+summary(trinary_csv)
+
+
+```
+
+
+**a. Plot scatter plots for both datasets **
+
+```{r message=FALSE, warning=FALSE}
+
+library(ggplot2)
+theme_set(theme_minimal())
+
+ggplot(binary_csv, aes(x = x, y = y, col=label)) + geom_point() + ggtitle("Binary csv scatterplot")
+
+
+ggplot(trinary_csv, aes(x = x, y = y, col=label)) + geom_point() + ggtitle("Trinary csv scatterplot")
+
+
+```
+
+
+
+
+
+##Split the respective data sets into train and test subsets. Also Eclidean distance calculated based on reference link.
+
+
+```{r, message=FALSE, warning=FALSE }
+
+library(caTools)
+library(philentropy)
+library(TSdist)
+
+set.seed(123456)
+
+split <- sample.split(binary_csv, SplitRatio=.8)
+
+##############################################################
+
+binary_csv_matrix <- rbind(binary_csv$x, binary_csv$y)
+
+EuclideanDistance(binary_csv$x,binary_csv$y)
+
+t1 <- stats::dist(binary_csv_matrix, method = "euclidean")
+
+cat("\n")
+cat("Euclidean distance for Binary dataset\n")
+t1
+cat("\n")
+
+bin_train <- subset(binary_csv, split == "TRUE")
+bin_test <- subset(binary_csv, split == "FALSE")
+
+
+##############################################################
+
+trinary_csv_matrix <- rbind(trinary_csv$x, trinary_csv$y)
+
+EuclideanDistance(trinary_csv$x,trinary_csv$y)
+
+t2 <- stats::dist(trinary_csv_matrix, method = "euclidean")
+
+cat("\n")
+cat("Euclidean distance for Trinary dataset\n")
+t2
+cat("\n")
+
+trin_train <- subset(trinary_csv, split == "TRUE")
+trin_test <- subset(trinary_csv, split == "FALSE")
+
+
+```
+
+**Answer a.**
+
+>Euclidean distance calculated for Binary csv dataset based on couple different ways is 1411.959.
+
+>Euclidean distance calculated for Trinary csv dataset based on couple different ways is 1357.734.
+
+
+**b. The k nearest neighbors algorithm. Accuracy results in a graph**
+
+>Calculated the accuracy levels for both the datasets based on the k values provided in the exercise. Stored the values of k in a list. Stored the corresponding combinations of k values and accuracy levels in a dataframe, later to be used for plotting the results.
+
+
+```{r warning=FALSE, echo=FALSE, message=FALSE}
+
+library(class)
+
+k_vector <- c(3, 5, 10, 15, 20, 25)
+
+#################################################################################
+
+accuracy_bin <- c()
+
+i <- 1
+
+for (n in k_vector) {
+    
+    binary.knn <- knn(train=bin_train, test=bin_test, cl=bin_train$label, k=n)
+    binary_accuracy <- sum(bin_test$label == binary.knn)/nrow(bin_test) * 100
+    
+    accuracy_bin <- c(accuracy_bin, binary_accuracy)
+    i <- i + 1
+    
+}
+
+head(binary.knn)
+
+tab_bin <- data.frame("k_value" = k_vector, "accuracy" = accuracy_bin)
+tab_bin
+
+#################################################################################
+
+accuracy_trin <- c()
+
+j <- 1
+
+for (n in k_vector) {
+  
+    trinary.knn <- knn(train=trin_train, test=trin_test, cl=trin_train$label, k=n)
+    trinary_accuracy <- sum(trin_test$label == trinary.knn)/nrow(trin_test) * 100
+    
+    accuracy_trin <- c(accuracy_trin, trinary_accuracy)
+    j <- j + 1
+}
+
+tab_trin <- data.frame("k_value" = k_vector, "accuracy" = accuracy_trin)
+tab_trin
+
+```
+
+**Plots of accuracy levels for respective k values**
+
+```{r echo=FALSE}
+
+ggplot(tab_bin, aes(x=k_value, y=accuracy)) + geom_point() + geom_line(aes(col="red"))
+
+ggplot(tab_trin, aes(x=k_value, y=accuracy)) + geom_point() + geom_line(aes(col="red"))
+
+```
+
+
+**Answer b.**
+
+> As we notice above, K nearest neighbors algorithm produces models with accuracy levels closer to 98% for binary data csv, for given set of values of k. And this accuracy level is fairly varies in the small range between 97.8% to 98.4% for the suggested K values. Accuracy levels are highest for k=15 and k=25 and lower for k=20.
+
+> For trinary data csv, K nearest neighbors algorithm produces models with accuracy levels varying between the range 87.6% to 92.7% for the suggested K values. Accuracy levels are highest for k=3 and k=5 and goes on decreasing later on up to k=20. Then for k=25, it goes up a bit.
+
+
+**c. Linear classifiers and decision plots**
+
+
+**Answer c.**
+
+>Looking at the scatter plot of Binary csv, the x vs. y scatter plots of labels 0 and 1 data points aren't distributed in a way as to to be able to easily classify them with linear classifier (imaginary line shown for question c). i.e. since the data points for these two labels are together at many places, we won't be able to use linear classifiers to easily differentiate between them
+
+>Similarly, for the scatter plot of Trinary csv, the x vs. y scatter plots of labels 0, 1 and 2 data points aren't distributed in a way as to to be able to easily classify them with linear classifier (imaginary line shown for question c). i.e. since the data points for these three labels are together at many places, we won't be able to use linear classifiers to easily differentiate between them
+
+
+
+## References
+
+https://cran.r-project.org/web/packages/philentropy/vignettes/Distances.html
+
+https://www.analyticsvidhya.com/blog/2015/08/learning-concept-knn-algorithms-programming/#:~:text=Unhesitatingly%2C%20using%20kNN%20Algorithm.,points%20into%20well%20defined%20groups
+
+https://kevinzakka.github.io/2016/07/13/k-nearest-neighbor/
