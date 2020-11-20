@@ -1,0 +1,181 @@
+---
+title: 'RMarkdown Assignment # 14 - Week 08'
+author: "Pushkar Chougule"
+date: "Oct 23rd 2020"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+bibliography: bibliography.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Note - Remove example code and comments before submitting assignment.  Producing a professional R Markdown document is the goal. 
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+##Read the Binary csv dataset and use summary() on the dataframe.
+
+
+```{r }
+
+binary_csv <- read.csv('binary-classifier-data.csv', header = TRUE)
+
+str(binary_csv)
+
+summary(binary_csv)
+
+
+```
+
+
+##Fit a binary logistic regression model to the data set
+
+
+```{r }
+
+library(caTools)
+
+split <- sample.split(binary_csv, SplitRatio = 0.8)
+split
+
+bin_train <- subset(binary_csv, split == "TRUE")
+bin_test <- subset(binary_csv, split == "FALSE")
+
+
+log_reg_binary <- glm(label ~ ., data = bin_train, family = "binomial")
+
+summary(log_reg_binary)
+
+num_rows <- nrow(binary_csv)
+num_rows
+
+k_train <- round(sqrt(nrow(bin_train)))
+k_train
+
+k_test <- round(sqrt(nrow(bin_test)))
+k_test
+
+```
+
+**a. What is the accuracy of the logistic regression classifier?**
+
+
+```{r}
+
+result <- predict(log_reg_binary, bin_test, type="response")
+
+confusion_matrix <- table(Actual_Value = bin_test$label, Predicted_Value = result > 0.5)
+confusion_matrix
+
+#Accuracy calculation based on confusion matrix
+accuracy = (confusion_matrix[[1,1]] + confusion_matrix[[2,2]])/sum(confusion_matrix) * 100
+accuracy
+
+
+```
+
+**Answer a.**
+
+>The above results indicate, based on the original dataset, that the model accuracy is around 58%. There are many False positives and false negatives outcomes from the model.
+So, this model does not produced very accurate results.
+
+
+
+
+
+**b. How does the accuracy of the logistic regression classifier compare to the nearest neighbors algorithm?**
+
+> Based on the informative link in reference section from https://www.analyticsvidhya.com, using square root values as k values for model predictions and accuracy calculations. And using nearest odd numbers as well
+
+>since k_train is 32 (even number), we will use k value as odd numbers closer to 32
+such as 31 and 33. Also, we will perform calculations based on the k_test value of 22
+such as values of 21 and 23. Finally we will calculate the model accuracy based on
+k value of based on total number of rows in the dataset, values such as 38 and 39.
+
+
+```{r warning=FALSE}
+
+library(class)
+
+cat("calculations based on the square root of total number of rows in test dataset\n")
+cat("\n")
+
+knn.out1 <- knn(train=bin_train, test=bin_test, cl=bin_train$label, k=21)
+knn.out2 <- knn(train=bin_train, test=bin_test, cl=bin_train$label, k=23)
+knn.out3 <- knn(train=bin_train, test=bin_test, cl=bin_train$label, k=k_test)
+
+accuracy_knn1 <- sum(bin_test$label == knn.out1)/nrow(bin_test) * 100
+accuracy_knn1
+
+accuracy_knn2 <- sum(bin_test$label == knn.out2)/nrow(bin_test) * 100
+accuracy_knn2
+
+accuracy_knn3 <- sum(bin_test$label == knn.out3)/nrow(bin_test) * 100
+accuracy_knn3
+
+cat("\n")
+cat("calculations based on the square root of total number of rows in train dataset\n")
+cat("\n")
+
+knn.out4 <- knn(train=bin_train, test=bin_test, cl=bin_train$label, k=31)
+knn.out5 <- knn(train=bin_train, test=bin_test, cl=bin_train$label, k=33)
+knn.out6 <- knn(train=bin_train, test=bin_test, cl=bin_train$label, k=k_train)
+
+accuracy_knn4 <- sum(bin_test$label == knn.out4)/nrow(bin_test) * 100
+accuracy_knn4
+
+accuracy_knn5 <- sum(bin_test$label == knn.out5)/nrow(bin_test) * 100
+accuracy_knn5
+
+accuracy_knn6 <- sum(bin_test$label == knn.out6)/nrow(bin_test) * 100
+accuracy_knn6
+
+cat("\n")
+cat("calculations based on the square root of total number of rows in full dataset\n")
+cat("\n")
+
+knn.out7 <- knn(train=bin_train, test=bin_test, cl=bin_train$label, k=38)
+knn.out8 <- knn(train=bin_train, test=bin_test, cl=bin_train$label, k=39)
+
+accuracy_knn7 <- sum(bin_test$label == knn.out7)/nrow(bin_test) * 100
+accuracy_knn7
+
+accuracy_knn8 <- sum(bin_test$label == knn.out8)/nrow(bin_test) * 100
+accuracy_knn8
+
+
+```
+
+
+**Answer b.**
+
+> As we notice above, K nearest neighbors algorithm produces model with accuracy closer to 96%, which is very good level of accuracy. And this accuracy level is very higher than the logistic regression model's accuracy
+
+
+
+**c. Why is the accuracy of the logistic regression classifier different from that of the nearest neighbors?**
+
+
+**Answer c.**
+
+>Logistic regression model uses generalized linear modelng technique using maximum likelyhood methd. It tries to predict the results/outcome based on the probability value ranging between 0 and 1. But this probability prediction may not be very reliable way, since we use threshold of greater than 0.5 for TRUE / FALSE outcome and we might miss out on the boundary values in predictions. As we noticed eariler, this method produced many false positive and false negative outcomes, which indicates the lower accuracy.
+
+>Nearest Neighbor method, however, is a instance based and non-parametric test. It uses training instances as "knowledge" for the prediction phase. It also does not make any assumption of distribution of the data samples. So, based on the data clusters formed during the training phase, it evaluates the test sample provided and predicts the outcome as binary results in testing dataset i.e. in our case, label variable values of 0 and 1. These steps are based on nearness of test dataset points in comparison with existing clusters values. This is makes is highly accurate, as the outcome predictions are based on the available data observations rather than with on a model based on assumption of relationship between variables.
+
+
+
+## References
+
+
+https://www.analyticsvidhya.com/blog/2015/08/learning-concept-knn-algorithms-programming/#:~:text=Unhesitatingly%2C%20using%20kNN%20Algorithm.,points%20into%20well%20defined%20groups
+
+https://kevinzakka.github.io/2016/07/13/k-nearest-neighbor/

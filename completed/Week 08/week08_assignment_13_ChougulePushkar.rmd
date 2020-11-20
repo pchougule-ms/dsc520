@@ -1,0 +1,109 @@
+---
+title: 'RMarkdown Assignment # 13 - Week 08'
+author: "Pushkar Chougule"
+date: "Oct 22nd 2020"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+bibliography: bibliography.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Note - Remove example code and comments before submitting assignment.  Producing a professional R Markdown document is the goal. 
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+##Read the ThoracicSurgery data and use summary() on the dataframe
+
+```{r }
+
+library(foreign)
+
+surgery_df <- read.arff('ThoraricSurgery.arff')
+
+str(surgery_df)
+
+summary(surgery_df)
+
+```
+
+##split data into test and train, create models, summary() of model
+
+
+**a. Fit a binary logistic regression model to the data set that predicts whether or not the patient survived for one year (the Risk1Y variable) after the surgery. Use the glm() function to perform the logistic regression. See Generalized Linear Models for an example. Include a summary using the summary() function in your results.**
+
+
+```{r warning=FALSE}
+
+library(caTools)
+
+# split the dataset into two for training and testing purpose
+
+split <- sample.split(surgery_df, SplitRatio = 0.8)
+split
+
+train <- subset(surgery_df, split == "TRUE")
+test <- subset(surgery_df, split == "FALSE")
+
+#log_reg_all <- glm(Risk1Yr ~ DGN + PRE4 + PRE5 + PRE6 + PRE7 + PRE8 + PRE9 + PRE10 + #PRE11 + PRE14 + PRE17 + PRE19 + PRE25 + PRE30 + PRE32 + AGE, data = train, family = #binomial(link = "logit"))
+
+log_reg_all <- glm(Risk1Yr ~ ., data = surgery_df, family = "binomial")
+
+summary(log_reg_all)
+
+exp(log_reg_all$coefficients)
+
+exp(confint(log_reg_all))
+
+```
+
+**b. According to the summary, which variables had the greatest effect on the survival rate?**
+
+
+> According to summary(), following variables have Pr(>|z|) value less than or closer to 0.05
+>1. PRE9T (Dyspnoea before surgery)
+>2. PRE14OC14 (PRE14 is the column and OC14 is the largest size of the original tumor)
+>3. PRE17T (Type 2 DM - diabetes mellitus)
+>4. PRE30T (Smoking)
+
+> Couple other variables below have Pr(>|z|) value just above 0.05 but below 0.10, which can also be considered as the predictors, if needed, to improve model further
+>1. PRE14OC13 (PRE14 is the column and OC13 is the large size of the original tumor)
+>2. PRE5 (Volume that has been exhaled at the end of the first second of forced expiration - FEV1 (numeric))
+
+> Odds ratio for above mentioned variables are greater than 1 as well, confirming that as predictors change, the odds of outcome changing increase, as per [@field2012discovering].
+
+
+
+**c. To compute the accuracy of your model, use the dataset to predict the outcome variable. The percent of correct predictions is the accuracy of your model. What is the accuracy of your model?**
+
+
+```{r}
+
+#Calculating accuracy for model with all variables and evaluate against the test data
+
+result <- predict(log_reg_all, test, type="response")
+
+confusion_matrix <- table(Actual_Value=test$Risk1Yr, Predicted_Value = result > 0.5)
+confusion_matrix
+
+#Accuracy calculation based on confusion matrix
+accuracy = (confusion_matrix[[1,1]] + confusion_matrix[[2,2]])/sum(confusion_matrix) * 100
+accuracy
+
+```
+
+
+>The above results indicate, based on the test dataset (subset of original dataset), that the model accuracy is 88.18%. There are some False negative outcomes from the model. But it can be improved with additional data points or by using more relevant predictor variables or the combination of the two.
+
+
+## References
+
