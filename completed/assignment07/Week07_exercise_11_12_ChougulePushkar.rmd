@@ -1,0 +1,337 @@
+---
+title: "RMarkdown Assignment - Exercise 11 and 12"
+author: "Pushkar Chougule"
+date: "Oct 18th 2020"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+  word_document: default
+bibliography: bibliography.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+**Reading the xlsx file into data frame. Using summary() and str() functions to understand data better and to understand the outliers**
+
+
+```{r }
+
+library(readxl)
+
+housing_df1 <- read_excel("week-6-housing.xlsx")
+
+summary(housing_df1)
+str(housing_df1)
+
+```
+
+**a. Data clean up task. **
+
+**Answer a. **
+
+> understanding above data and manually looking at excel data, determined possible outliers values and dropped them from dataframe
+
+```{r }
+
+#housing_df <- housing_df1[housing_df1$`Sale Price` > 50000 & #housing_df1$`Sale Price` < 3000000 & housing_df1$square_feet_total_living < #8000, ]
+
+housing_df <- housing_df1
+
+summary(housing_df)
+str(housing_df)
+
+
+```
+
+
+**calculate R2 values for select few variables, to understand the potential predictor variables, which can have most impacts**
+
+```{r }
+
+cor(housing_df$"Sale Price", housing_df$sq_ft_lot)^2 
+cor(housing_df$"Sale Price", housing_df$square_feet_total_living)^2
+cor(housing_df$"Sale Price", housing_df$building_grade)^2
+cor(housing_df$"Sale Price", housing_df$bedrooms)^2
+cor(housing_df$"Sale Price", housing_df$bath_full_count)^2
+cor(housing_df$"Sale Price", housing_df$year_built)^2
+#cor(housing_df$"Sale Price", housing_df$current_zoning)^2
+#cor(housing_df$"Sale Price", housing_df$sitetype)^2
+
+
+```
+
+**b. Create two models : simple linear regression and multiple regression **
+
+
+```{r }
+
+housing_mod1 <- lm(`Sale Price` ~ sq_ft_lot, data = housing_df)
+
+housing_mod2 <- lm(`Sale Price` ~ sq_ft_lot + square_feet_total_living + building_grade, data = housing_df)
+
+
+```
+
+**Answer b. **
+> For Multiple regression model, considered only few numeric variables, after looking at above R-squared (R2) values. square feet total living has 44.48% impact, building grade has 36.97% impact and used in addition to square feet lot variable.
+
+
+
+**c. execute summary() function. explain R2 and adjusted R2 values**
+
+```{r }
+
+summary(housing_mod1)
+summary(housing_mod2)
+
+
+```
+
+**Answer c.**
+
+>Simple linear regression model has R2 value of 0.0346 and adjusted R2 value of 0.03452, which is roughly about 3.46% of an impact on Sale Price. The difference between these two values is 0.00008 i.e. very minimal. SO, if the model were derived from the population rather than a sample and it would account for 0.0080% of variance, which is very small.
+>Multiple linear regression model has R2 value of 0.4737 and adjusted R2 value of 0.4735, which is roughly about 47.37% of an impact on Sale Price. The difference between these two values is 0.0002 i.e. very minimal. SO, if the model were derived from the population rather than a sample and it would account for 0.02% of variance, which is very small.
+> We can infer that the second model increased R2 value from 3.46% to 47.37%, which is very significant increase
+
+
+**d. standardized betas function. **
+
+
+```{r }
+
+library(QuantPsyc)
+
+lm.beta(housing_mod2)
+
+```
+
+**Answer d. **
+
+>The standardized beta estimates tell us the number of standard deviations by which the outcome will change as a result of one standard deviation change in the predictor.
+
+>With our cleaned up sample data
+>1 standard deviation of change in Square feet lot causes sales price to change by 0.04686682 standard deviation. 
+>1 standard deviation change in square feet total living causes sales price to change by 0.46939216 standard deviation and 
+>1 standard deviation change in building_grade can cause 0.24978199 standard deviation change in sale price. 
+
+
+**e. confidence interval **
+
+
+```{r }
+
+confint(housing_mod2, level = 0.95)
+
+```
+
+**Answer e.**
+
+>The confidence interval shows that there is positive relation between all the 3 predictors and outcome variable. Also the 95% confidence interval range for the 3 predictor variables is not very large / wide which indicates this cleaned up sample is fairly close representation of the beta values of the population. So, our model is closer to the real data.
+
+
+**f. analysis of variance **
+
+
+```{r }
+
+anova(housing_mod1, housing_mod2)
+
+```
+
+**Answer f.**
+
+>The value in column labelled Pr(>F) is 2.2e−16 (i.e., 2.2 with the decimal place moved 16 places to the left, or a really very small value); we can say that housing_mod2 has significantly improved the fit of the model to the data compared to housing_mod1.
+
+
+**g. casewise diagnostics **
+
+**Answer g.**
+
+> casewise diagnostics performed using the formuale given in [@field2012discovering] book, page 289
+
+```{r }
+
+housing_df$standardized.residuals <- rstandard(housing_mod2)
+head(housing_df$standardized.residuals)
+
+housing_df$studentized.residuals <- rstudent(housing_mod2)
+head(housing_df$studentized.residuals)
+
+housing_df$cooks.distance <- cooks.distance(housing_mod2)
+head(housing_df$cooks.distance)
+
+housing_df$dfbeta <- dfbeta(housing_mod2)
+head(housing_df$dfbeta)
+
+housing_df$dffit <- dffits(housing_mod2)
+head(housing_df$dffit)
+
+housing_df$leverage <- hatvalues(housing_mod2)
+head(housing_df$leverage)
+
+housing_df$covariance.ratios <- covratio(housing_mod2)
+head(housing_df$covariance.ratios)
+
+```
+
+
+**h. large standardized residuals **
+
+**Answer h.**
+
+> large standardized residuals calculated using the formula given in [@field2012discovering] book
+
+```{r }
+
+housing_df$large_residual <- housing_df$standardized.residuals > 2 | housing_df$standardized.residuals < -2
+
+```
+
+
+**i. sum of large standardized residuals **
+
+**Answer i.**
+
+>sum function to calculate sum of large standardized residuals
+
+```{r }
+
+sum(housing_df$large_residual)
+
+```
+
+**j. specific variables with large standardized residuals **
+
+**Answer j.**
+
+> where large standardized residuals is TRUE
+
+```{r }
+
+housing_df[housing_df$large_residual, c("Sale Price", "sq_ft_lot", "square_feet_total_living", "building_grade" , "standardized.residuals")]
+
+```
+
+
+
+**k. calculate leverage, cooks distance and covariance ratios and problematic cases **
+
+
+```{r }
+
+large_residuals <- housing_df[housing_df$large_residual, c("cooks.distance", "leverage", "covariance.ratios")]
+head(large_residuals)
+
+#Check if any problematic cases exist, with cooks.distance greater than 1
+cooks.distance.gt1.df <- housing_df[housing_df$cooks.distance > 1, ]
+
+head(cooks.distance.gt1.df)
+
+```
+
+
+**Answer k.**
+
+> Looking at above, amongst 514 large residual instances, none of them has cooks.distance greater than 1. So, none of the cases us having any undue influence on the model.
+
+```{r}
+#average leverage calculations = (3 + 1) / 12672
+
+avg_leverage <- (3 + 1) / 12672
+avg_leverage
+
+# calculate twice the average leverage and thrice the average leverage values
+avg_leverage_2 <- 2 * avg_leverage
+avg_leverage_3 <- 3 * avg_leverage
+
+nrow(large_residuals[large_residuals$leverage > avg_leverage_2,])
+nrow(large_residuals[large_residuals$leverage > avg_leverage_3,])
+
+```
+
+>we see that there are 216 large residuals cases with leverage greater than twice the average leverage and 149 large residuals cases with leverage greater than thrice the average leverage. however, none of the case has cooks distance greater than 1, as previously seen. So, we may not need to worry on this.
+
+```{r}
+
+cvr_upper <- 1 + avg_leverage_3
+cvr_lower <- 1 - avg_leverage_3
+
+cvr_lower
+cvr_upper
+
+nrow(large_residuals[large_residuals$covariance.ratios > cvr_upper | large_residuals$covariance.ratios < cvr_lower,])
+nrow(large_residuals[large_residuals$covariance.ratios > cvr_upper,])
+nrow(large_residuals[large_residuals$covariance.ratios < cvr_lower,])
+
+```
+
+>we see that there are total of 393 large residuals cases with covariance ratio outside of lower limit of 0.999053 and upper limit of 1.000947.  However, none of the case has cooks distance greater than 1, as previously seen. So, we may not need to worry on this.
+
+
+**l. assumptions of independence **
+
+
+```{r }
+library(car)
+dwt(housing_mod2)
+
+```
+
+**Answer l.**
+
+>The Durbin Watson test reports a test statistic indicates if the values fall outside the range of 1 to 3, then we may run into problems of autocorrelation between predicor variables. If closer to 2, indicated no autocorrelation between predictor variables.
+> Durbin Watson statistic value above calculated is approx 1.15 and seems to be in the range of 1 to 3. But we can notice that there a dependence existing, nevertheless, between square feet lot and square feet total living variables and shown by Autocorrelation value of 0.4252643
+
+
+
+**m. assumptions of no multicolinearity **
+
+
+```{r }
+
+vif(housing_mod2)
+
+1/vif(housing_mod2)
+
+mean(vif(housing_mod2))
+
+```
+
+
+**Answer m.**
+
+>Based on [@field2012discovering] book
+>All of the VIF values are well below 10. SO, there is no cause of concerns.
+>All of the tolerance values are well above 0.1
+>Mean of VIF values is little above 1, indicates our model might be slightly biased and may be needs to consider additional variables or more cleaning of data needed or change predictor variables is needed somewhat
+
+
+**n. plot() and hist() functions **
+
+```{r }
+plot(housing_mod2)
+
+hist(housing_df$studentized.residuals)
+
+```
+
+**Answer n.**
+
+> looking at the "Residuals vs Fitted Values" plot, residuals in our model shows a fairly random pattern, which is indicative of situation in which the assumptions of linearity, randomness and homoscedasticity have been met.
+> Q-Q plot shows there is deviation from normality on either ends of the data, indicating we might still be having some skewed data / outliers in the sample and hence deviation from the normal straight line
+> Looking at the histogram, we can see that the middle portion of the plot, which has most data points present, is near normal. But we have outliers present on either side (plot extends towards 10 on positive side). Suggesting we might need additional data cleaning to get a little better.
+
+
+**o. unbiased regression model? **
+
+**Answer o.**
+
+> Looking at the model, it is fairly close representation of the sample and a generalizable model to the larger poulation. Can be improved further by deleting outliers for model building purpose.
+
+## References
+
